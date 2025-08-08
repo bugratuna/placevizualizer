@@ -26,7 +26,7 @@ DevOps & Quality: ESLint, Prettier, Husky, lint-staged, GitHub Actions
 🚀 Setup Steps
 Follow these steps to run the project on your local machine.
 
-1. Clone the Project:
+1. Clone the Project: 
 
 git clone <repository-url>
 cd place-visualizer-project 
