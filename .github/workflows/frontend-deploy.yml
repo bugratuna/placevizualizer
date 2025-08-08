@@ -11,7 +11,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./place-visualizer/frontend
+        working-directory: ./frontend
 
     steps:
       - name: Checkout code
@@ -33,7 +33,7 @@ jobs:
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2
         with:
-          publish-dir: './place-visualizer/frontend/dist'
+          publish-dir: './frontend/dist'
           production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
