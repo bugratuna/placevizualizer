@@ -29,4 +29,4 @@ Follow these steps to run the project on your local machine.
 1. Clone the Project:
 
 git clone <repository-url>
-cd place-visualizer-project
+cd place-visualizer-project 
