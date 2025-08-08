@@ -9,6 +9,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ./place-visualizer/backend
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,15 +21,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: place-visualizer/backend/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./place-visualizer/backend
         run: npm install
 
       - name: Build TypeScript
-        working-directory: ./place-visualizer/backend
         run: npm run build
 
       - name: Trigger Render Deploy
