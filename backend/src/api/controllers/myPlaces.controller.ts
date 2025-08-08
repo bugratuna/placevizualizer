@@ -31,6 +31,7 @@ export const getMyPlaceById = async (
     if (!data) {
       throw new HttpError("Bu ID ile bir mekan bulunamadı.", 404);
     }
+    console.log(data)
 
     res.status(200).json({
       success: true,
