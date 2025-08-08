@@ -14,6 +14,7 @@ import {
   type ApiHomeZipcodeData,
   type TradeAreaResponse,
   type HomeZipcodeResponse,
+  type CustomerOriginData,
 } from '../types';
 
 const apiClient = axios.create({
@@ -70,8 +71,9 @@ export const getCustomerOriginData = async (
 ): Promise<TradeAreaResponse[] | HomeZipcodeResponse[]> => {
   try {
     const percentilesString = percentiles?.length ? percentiles.join(',') : '';
-    const response = await apiClient.get<ApiResponse<ApiZipcodeGeometry>>(
-      `/places/${placeId}/customer-origin?dataType=${dataType}&percentiles=${percentilesString}`
+
+    const response = await apiClient.get<TradeAreaResponse[] | HomeZipcodeResponse[]>(
+        `/places/${placeId}/customer-origin?dataType=${dataType}&percentiles=${percentilesString}`
     );
 
     return response.data;

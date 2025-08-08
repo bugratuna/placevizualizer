@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
 import Map from 'react-map-gl/mapbox';
+import type { PickingInfo } from '@deck.gl/core';
 import { ScatterplotLayer, PolygonLayer } from '@deck.gl/layers';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useDataStore } from '../../store/useDataStore';
 import { usePlaceFilter } from '../../store/usePlaceFilter';
 import { useCustomerAnalysis } from '../../store/useCustomerAnalysis';
 import {
-  useMapStateStore,
   type DeckGLPickInfo,
+  useMapStateStore,
 } from '../../store/useMapStateStore';
 import {
   TRADE_AREA_COLORS,
@@ -17,6 +18,9 @@ import {
 import MapTooltip from './components/MapTooltip';
 import type { Place, HomeZipcode, TradeArea } from '../../types';
 import { useCompetitorAnalysis } from '../../store/useCompetitorAnalysis';
+
+// A more specific type for zipcode data that includes our calculated quintile.
+type ZipcodeWithQuintile = HomeZipcode & { quintile: string };
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
@@ -38,8 +42,7 @@ const MapController = () => {
   const { setHoveredInfo, setPinnedInfo, hoveredInfo, pinnedInfo } =
     useMapStateStore();
   const { visibleTradeAreaIds, visibleHomeZipcodeId } = useMapStateStore();
-
-  const homeZipcodesToRender = useMemo(() => {
+  const homeZipcodesToRender = useMemo((): ZipcodeWithQuintile[] => {
     const activeZipcodes = visibleHomeZipcodeId
       ? homeZipcodes[visibleHomeZipcodeId]
       : [];
@@ -111,21 +114,29 @@ const MapController = () => {
       data: tradeAreasToRender,
       getPolygon: (d) => d.geometry.geometry.coordinates,
       getFillColor: (d) =>
-        (TRADE_AREA_COLORS[d.level] as [number, number, number, number]) ||
-        ([255, 255, 255, 50] as [number, number, number, number]),
+        // The type assertion should be outside the fallback logic for correctness.
+        (TRADE_AREA_COLORS[d.level] || [255, 255, 255, 50]) as [
+          number,
+          number,
+          number,
+          number,
+        ],
       stroked: true,
       getLineColor: [255, 255, 255],
       lineWidthMinPixels: 1,
     });
 
-    const homeZipcodeLayer = new PolygonLayer<HomeZipcode>({
+    const homeZipcodeLayer = new PolygonLayer<ZipcodeWithQuintile>({
       id: 'home-zipcode-layer',
       data: homeZipcodesToRender,
       getPolygon: (d) => d.geometry.geometry.coordinates,
       getFillColor: (d) =>
-        (ZIPCODE_PERCENTILE_COLORS[d.quintile || '20-40'] || [
-          128, 128, 128, 128,
-        ]) as [number, number, number, number],
+        (ZIPCODE_PERCENTILE_COLORS[d.quintile] || [128, 128, 128, 128]) as [
+          number,
+          number,
+          number,
+          number,
+        ],
       stroked: true,
       getLineColor: [255, 255, 255],
       lineWidthMinPixels: 0.5,
@@ -147,13 +158,13 @@ const MapController = () => {
     competitorsVisible,
   ]);
 
-  const handleObjectClick = (info: DeckGLPickInfo | null) => {
-    setPinnedInfo(info && info.object ? info : null);
+  const handleObjectClick = (info: PickingInfo) => {
+    setPinnedInfo(info && info.object ? (info as DeckGLPickInfo) : null);
   };
 
-  const handleObjectHover = (info: DeckGLPickInfo | null) => {
+  const handleObjectHover = (info: PickingInfo) => {
     if (!pinnedInfo) {
-      setHoveredInfo(info && info.object ? info : null);
+      setHoveredInfo(info && info.object ? (info as DeckGLPickInfo) : null);
     }
   };
 

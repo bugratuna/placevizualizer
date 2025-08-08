@@ -72,6 +72,8 @@ export interface HomeZipcodeResponse {
   customerCount: number;
 }
 
+export type CustomerOriginData = 'Trade Area' | 'Home Zipcodes';
+
 export interface Place {
   _id: string;
   placeId: string;

@@ -1,11 +1,8 @@
 import { create } from 'zustand';
+import type { PickingInfo } from '@deck.gl/core';
 
-export interface DeckGLPickInfo {
-  x: number;
-  y: number;
-  object: any;
-  layer: any;
-  index: number;
+export interface DeckGLPickInfo extends PickingInfo {
+    object: any;
 }
 
 interface MapState {
