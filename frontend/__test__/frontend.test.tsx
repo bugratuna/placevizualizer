@@ -1,18 +1,27 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { IMyPlace as IPlace } from '../../backend/src/types';
+import type { Place } from '../src/types';
 import LegendItem from '../src/features/legend/components/LegendItem';
 import TradeAreaLegend from '../src/features/legend/components/TradeAreaLegend';
 import HomeZipcodeLegend from '../src/features/legend/components/HomeZipcodeLegend';
 import MapTooltip from '../src/features/map/components/MapTooltip';
 import CustomerAnalysis from '../src/features/sidebar/components/CustomerAnalysis';
-import RightSidebar from '../src/features/sidebar/components/RightSidebar';
+import RightSidebar from '../src/features/legend/RightSidebar';
+import type { DeckGLPickInfo } from '../src/store/useMapStateStore';
 import { useCustomerAnalysis } from '../src/store/useCustomerAnalysis';
 
 // Mocking the Zustand store
 jest.mock('../src/store/useCustomerAnalysis');
+jest.mock('../src/store/useMapStateStore');
+jest.mock('../src/hooks/useCustomerLayerLogic', () => ({
+    useCustomerLayerLogic: () => ({
+        handleToggleTradeArea: jest.fn(),
+        handleToggleHomeZipcodes: jest.fn(),
+    }),
+}));
+
 const mockedUseCustomerAnalysis = useCustomerAnalysis as jest.MockedFunction<typeof useCustomerAnalysis>;
+
 
 describe('LegendItem', () => {
     const mockProps = {
@@ -50,21 +59,40 @@ describe('HomeZipcodeLegend', () => {
 });
 
 describe('MapTooltip', () => {
-    const mockData = {
-        zipcode: '12345',
-        customerCount: 150,
-        homeZipcodeCount: 25,
-        tradeAreaName: 'Center',
-        competitorCount: 5,
+    const mockPlace: Place = {
+        _id: '1',
+        placeId: '1',
+        name: 'Test Place',
+        address: '123 Main St, Test City',
+        industry: 'Testing',
+        location: {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [0, 0] },
+            properties: {},
+        },
+        hasTradeArea: true,
+        hasHomeZipcodes: true,
+        isMyPlace: true
     };
 
-    test('Render Test', () => {
-        render(<MapTooltip {...mockData} />);
-        expect(screen.getByText('12345')).toBeInTheDocument();
-        expect(screen.getByText('Customer Count: 150')).toBeInTheDocument();
-        expect(screen.getByText('Home Zipcode Count: 25')).toBeInTheDocument();
-        expect(screen.getByText('Trade Area: Center')).toBeInTheDocument();
-        expect(screen.getByText('Competitor Count: 5')).toBeInTheDocument();
+    const mockInfo: DeckGLPickInfo = {
+        x: 10,
+        y: 20,
+        object: mockPlace,
+        index: 0,
+        layer: {} as any,
+        coordinate: [0,0],
+        color: null,
+        pixel: [10, 20],
+        pixelRatio: 1,
+        picked: false
+    };
+
+    test('renders with a selected place', () => {
+        mockedUseCustomerAnalysis.mockReturnValue({ dataType: 'Trade Area' } as any);
+        render(<MapTooltip info={mockInfo} isPinned={false} />);
+        expect(screen.getByText('Test Place')).toBeInTheDocument();
+        expect(screen.getByText('123 Main St, Test City')).toBeInTheDocument();
     });
 });
 
@@ -105,34 +133,23 @@ describe('CustomerAnalysis', () => {
 });
 
 describe('RightSidebar', () => {
-    const mockPlace: IPlace = {
-        type: 'Feature',
-        properties: {
-            id: '1',
-            name: 'Test Place',
-            competitors: [],
-            tradeArea: {
-                type: 'Feature',
-                properties: { name: 'Center' },
-                geometry: { type: 'Polygon', coordinates: [] },
-            },
-            customerOrigin: {
-                '12345': 10,
-                '54321': 20,
-            },
-        },
-        geometry: { type: 'Point', coordinates: [0, 0] },
-    };
+    test('renders TradeAreaLegend when dataType is Trade Area', () => {
+        mockedUseCustomerAnalysis.mockReturnValue({
+            dataType: 'Trade Area',
+            selectedTradeAreaPercentages: [30, 50, 70],
+        } as any);
 
-    test('renders with a selected place', () => {
-        render(<RightSidebar selectedPlace={mockPlace} />);
-        expect(screen.getByText('Competitor Markets')).toBeInTheDocument();
+        render(<RightSidebar />);
         expect(screen.getByText('Trade Area')).toBeInTheDocument();
-        expect(screen.getByText('Customer Zip Codes')).toBeInTheDocument();
     });
 
-    test('renders null when no place is selected', () => {
-        render(<RightSidebar selectedPlace={null} />);
-        expect(screen.queryByText('Competitor Markets')).not.toBeInTheDocument();
+    test('renders HomeZipcodeLegend when dataType is Home Zipcodes', () => {
+        mockedUseCustomerAnalysis.mockReturnValue({
+            dataType: 'Home Zipcodes',
+        } as any);
+
+        // HomeZipcodeLegend'in bir metnini kontrol edelim
+        render(<RightSidebar />);
+        expect(screen.getByText('Customer Zip Codes')).toBeInTheDocument();
     });
 });
